@@ -1,130 +1,219 @@
 <template>
-    <section>
-        <p class="content"><b>Selected:</b> { { selected } }</p>
-        <b-field label="Find a name">
-            <b-autocomplete
-                v-model="name"
-                placeholder="e.g. IBM"
-                :keep-first="keepFirst"
-                :open-on-focus="openOnFocus"
-                :data="filteredDataObj"
-                field="bestMatches.symbol"
-                @select="option => (selected = option)"
-                :clearable="clearable"
-            >
-            </b-autocomplete>
-        </b-field>
-    </section>
+    <div>
+        <ul v-if="isDataReceived && !showInsights">
+            <li v-for="(list, index) in symbolList" :key="index" v-on:click="getStockDetails($event)">
+        {{ list["1. symbol"] }}
+      </li>
+    </ul>
+
+    <div class="callout" v-if="showInsights">
+        <button class="callout_close" @click="showInsights=false"> X </button> <br>
+        <br>
+        <div>
+            <p><strong>Simple Moving Average</strong></p>
+            <p v-for="(avg, index) in smaResult" :key="index">{{ avg }}</p>
+        </div>
+        <div id="chartContainer" class="chart" style="min-height: 360px; width: 100%;"></div>
+    </div>
+  </div>
 </template >
 
     <script>
-        const data =
-[{ "id":1,"user":{ "first_name":"Jesse","last_name":"Simmons"},"date":"2016/10/15 13:43:27","gender":"Male"},
-{ "id":2,"user":{ "first_name":"John","last_name":"Jacobs"},"date":"2016/12/15 06:00:53","gender":"Male"},
-{ "id":3,"user":{ "first_name":"Tina","last_name":"Gilbert"},"date":"2016/04/26 06:26:28","gender":"Female"},
-{ "id":4,"user":{ "first_name":"Clarence","last_name":"Flores"},"date":"2016/04/10 10:28:46","gender":"Male"},
-{ "id":5,"user":{ "first_name":"Anne","last_name":"Lee"},"date":"2016/12/06 14:38:38","gender":"Female"},
-{ "id":6,"user":{ "first_name":"Sara","last_name":"Armstrong"},"date":"2016/09/23 18:50:04","gender":"Female"},
-{ "id":7,"user":{ "first_name":"Anthony","last_name":"Webb"},"date":"2016/08/30 23:49:38","gender":"Male"},
-{ "id":8,"user":{ "first_name":"Andrew","last_name":"Greene"},"date":"2016/11/20 14:57:47","gender":"Male"},
-{ "id":9,"user":{ "first_name":"Russell","last_name":"White"},"date":"2016/07/13 09:29:49","gender":"Male"},
-{ "id":10,"user":{ "first_name":"Lori","last_name":"Hunter"},"date":"2016/12/09 01:44:05","gender":"Female"},
-{ "id":11,"user":{ "first_name":"Ronald","last_name":"Wood"},"date":"2016/12/04 02:23:48","gender":"Male"},
-{ "id":12,"user":{ "first_name":"Michael","last_name":"Harper"},"date":"2016/07/27 13:28:15","gender":"Male"},
-{ "id":13,"user":{ "first_name":"George","last_name":"Dunn"},"date":"2017/03/07 12:26:52","gender":"Male"},
-{ "id":14,"user":{ "first_name":"Eric","last_name":"Rogers"},"date":"2016/06/07 05:41:52","gender":"Male"},
-{ "id":15,"user":{ "first_name":"Juan","last_name":"Meyer"},"date":"2017/02/01 04:56:34","gender":"Male"},
-{ "id":16,"user":{ "first_name":"Silvia","last_name":"Rosa"},"date":"2017/01/26 11:50:04","gender":"Female"},
-{ "id":17,"user":{ "first_name":"Lori","last_name":"Cunningham"},"date":"2016/05/01 10:00:56","gender":"Female"},
-{ "id":18,"user":{ "first_name":"Charles","last_name":"Graham"},"date":"2016/05/31 06:43:30","gender":"Male"},
-{ "id":19,"user":{ "first_name":"Henry","last_name":"Morrison"},"date":"2016/09/27 16:15:44","gender":"Male"},
-{ "id":20,"user":{ "first_name":"Albert","last_name":"Mendoza"},"date":"2016/08/08 05:29:24","gender":"Male"},
-{ "id":21,"user":{ "first_name":"Ruby","last_name":"Snyder"},"date":"2017/04/01 12:04:39","gender":"Female"},
-{ "id":22,"user":{ "first_name":"Jesse","last_name":"Warren"},"date":"2016/08/20 01:36:38","gender":"Male"},
-{ "id":23,"user":{ "first_name":"Carlos","last_name":"Ferguson"},"date":"2016/05/31 10:40:29","gender":"Male"},
-{ "id":24,"user":{ "first_name":"Melissa","last_name":"Peters"},"date":"2016/07/23 00:41:54","gender":"Female"},
-{ "id":25,"user":{ "first_name":"Arthur","last_name":"Garza"},"date":"2017/03/11 14:11:37","gender":"Male"},
-{ "id":26,"user":{ "first_name":"Joe","last_name":"Berry"},"date":"2016/07/09 15:16:56","gender":"Male"},
-{ "id":27,"user":{ "first_name":"Joseph","last_name":"Bishop"},"date":"2016/10/04 19:44:54","gender":"Male"},
-{ "id":28,"user":{ "first_name":"Sarah","last_name":"Harper"},"date":"2016/09/23 05:09:11","gender":"Female"},
-{ "id":29,"user":{ "first_name":"Christopher","last_name":"Fuller"},"date":"2016/04/12 00:05:35","gender":"Male"},
-{ "id":30,"user":{ "first_name":"Alan","last_name":"Mendoza"},"date":"2016/04/22 10:48:02","gender":"Male"},
-{ "id":31,"user":{ "first_name":"James","last_name":"Davis"},"date":"2017/01/16 15:17:03","gender":"Male"},
-{ "id":32,"user":{ "first_name":"Scott","last_name":"Welch"},"date":"2016/10/04 23:31:51","gender":"Male"},
-{ "id":33,"user":{ "first_name":"Mildred","last_name":"Myers"},"date":"2016/11/23 13:46:18","gender":"Female"},
-{ "id":34,"user":{ "first_name":"Victor","last_name":"Martinez"},"date":"2016/04/06 17:05:07","gender":"Male"},
-{ "id":35,"user":{ "first_name":"Susan","last_name":"Medina"},"date":"2016/12/09 10:33:37","gender":"Female"},
-{ "id":36,"user":{ "first_name":"Judy","last_name":"Long"},"date":"2016/07/26 16:19:04","gender":"Female"},
-{ "id":37,"user":{ "first_name":"Joan","last_name":"Myers"},"date":"2016/09/22 04:55:54","gender":"Female"},
-{ "id":38,"user":{ "first_name":"Rachel","last_name":"Gonzales"},"date":"2016/07/15 13:56:38","gender":"Female"},
-{ "id":39,"user":{ "first_name":"Roger","last_name":"Hunt"},"date":"2016/08/14 10:43:11","gender":"Male"},
-{ "id":40,"user":{ "first_name":"Dorothy","last_name":"Howard"},"date":"2016/06/19 05:34:49","gender":"Female"},
-{ "id":41,"user":{ "first_name":"Eugene","last_name":"Lynch"},"date":"2016/12/24 08:19:24","gender":"Male"},
-{ "id":42,"user":{ "first_name":"Kathy","last_name":"Webb"},"date":"2017/04/01 21:09:05","gender":"Female"},
-{ "id":43,"user":{ "first_name":"Antonio","last_name":"White"},"date":"2017/02/10 06:51:20","gender":"Male"},
-{ "id":44,"user":{ "first_name":"Louis","last_name":"Spencer"},"date":"2016/10/08 02:20:22","gender":"Male"},
-{ "id":45,"user":{ "first_name":"Andrea","last_name":"Marshall"},"date":"2016/09/04 10:59:57","gender":"Female"},
-{ "id":46,"user":{ "first_name":"Eugene","last_name":"Sims"},"date":"2017/03/15 06:39:48","gender":"Male"},
-{ "id":47,"user":{ "first_name":"Mildred","last_name":"Gibson"},"date":"2016/04/18 06:43:54","gender":"Female"},
-{ "id":48,"user":{ "first_name":"Joan","last_name":"Arnold"},"date":"2016/12/16 04:52:23","gender":"Female"},
-{ "id":49,"user":{ "first_name":"Jesse","last_name":"Schmidt"},"date":"2016/06/11 02:44:33","gender":"Male"},
-{ "id":50,"user":{ "first_name":"David","last_name":"Frazier"},"date":"2017/02/15 21:46:30","gender":"Male"},
-{ "id":51,"user":{ "first_name":"Nicholas","last_name":"Howell"},"date":"2016/11/01 15:08:31","gender":"Male"},
-{ "id":52,"user":{ "first_name":"Douglas","last_name":"Chapman"},"date":"2017/02/08 03:33:24","gender":"Male"},
-{ "id":53,"user":{ "first_name":"Bruce","last_name":"Simmons"},"date":"2016/07/14 12:11:17","gender":"Male"},
-{ "id":54,"user":{ "first_name":"Antonio","last_name":"George"},"date":"2016/11/07 19:12:55","gender":"Male"},
-{ "id":55,"user":{ "first_name":"Chris","last_name":"Marshall"},"date":"2016/07/03 12:11:45","gender":"Male"},
-{ "id":56,"user":{ "first_name":"Ashley","last_name":"Hudson"},"date":"2016/10/14 21:08:05","gender":"Female"},
-{ "id":57,"user":{ "first_name":"Alan","last_name":"Edwards"},"date":"2017/03/22 21:10:25","gender":"Male"},
-{ "id":58,"user":{ "first_name":"George","last_name":"Clark"},"date":"2016/04/28 03:15:05","gender":"Male"},
-{ "id":59,"user":{ "first_name":"Frank","last_name":"Porter"},"date":"2016/09/08 00:48:14","gender":"Male"},
-{ "id":60,"user":{ "first_name":"Christopher","last_name":"Palmer"},"date":"2016/05/24 08:58:12","gender":"Male"}];
+        // import Highcharts from 'highcharts/highstock';
 
-export default {
+        export default {
             name: "ContentSection",
-    props: {
+  props: {
             msg: String,
-    },
-    data() {
-        return {
-            data,
+  },
+  data() {
+    return {
             keepFirst: false,
-            openOnFocus: false,
-            name: '',
-            selected: null,
-            clearable: false
-        }
-    },
-    created() {
-        const symbol = 'ibm';
-        const ppp = this.getSymbolData(symbol);
-        console.log('ppp: ', ppp);
-    },
-    computed: {
-            // filteredDataObj() {
-            //     return this.data.filter(option => {
-            //         return (
-            //             option.user.first_name
-            //                 .toString()
-            //                 .toLowerCase()
-            //                 .indexOf(this.name.toLowerCase()) >= 0
-            //         )
-            //     })
-            // }
-        },
-    methods: {
-
-            getSymbolData( symbolVal ) {
+      openOnFocus: false,
+      name: "",
+      selected: null,
+      clearable: false,
+      symbol: "",
+      symbolList: { },
+      isDataReceived: false,
+      stockDetails: {},
+      showInsights: false,
+      smaResult: [],
+    };
+  },
+  created() {
+            this.symbol = "ibm";
+            this.getSymbolData(this.symbol);
+            
+  },
+  computed: { },
+  methods: {
+        getSymbolData( symbolVal ) {
             let url = `https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${ symbolVal }&apikey=MV745E3M4G9V1QD6`;
-            let symbolData = { };
-            this.http.get(url).then((response) => {
-            console.log( response.data, this )
-                symbolData = response.data
-                this.loading = false
+            this.$http.get(url).then((response) => {
+                this.loading = false;
+                this.symbolList = response.body.bestMatches;
+                console.log('symbolList ', this.symbolList);
+                return this.symbolList;
             });
-
-            return symbolData;
         },
-},
-}
+
+        getStockDetails(e) {
+            console.log('details ', e.target.innerText);
+            let symbolVal = e.target.innerText;
+            let url = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${ symbolVal }&interval=5min&apikey=MV745E3M4G9V1QD6`;
+            this.$http.get(url).then((response) => {
+                this.loading = false;
+                this.stockDetails = response.body;
+                this.showInsights = true;
+                console.log('stockDetails ', this.stockDetails);
+                const arrLen = Object.entries(this.stockDetails["Time Series (5min)"]);
+                let array = [];
+                for(let i = arrLen.length; i > arrLen.length-10; i--){
+                    array.push(Number(arrLen[i-1][1]["4. close"]));
+                    console.log({arrLen});
+                }
+                const SMA = this.getSma(5, 7, array);
+                console.log('SMA: ', SMA);
+                return this.stockDetails;
+            });
+        },
+        
+        getSma(before, after, array) {
+            
+            if (after == undefined) after = 0;
+            const smaResult = [];
+            for (let i = 0; i < array.length; i++) {
+                const subArr = array.slice(Math.max(i - before, 0), Math.min(i + after + 1, array.length));
+                const avg = subArr.reduce((a, b) => a + (isNaN(b) ? 0 : b), 0) / subArr.length;
+                smaResult.push(avg);
+            }
+            console.log({smaResult});
+            this.smaResult = smaResult;
+            return this.smaResult;
+        },
+    },
+    mounted() {
+        if(this.symbolList) {
+            this.isDataReceived = true;
+        }
+        // this.loadChart();
+
+        // **************************************
+
+           /* Highcharts.getJSON('this.stockDetails["Time Series (5min)"]', function(data) {
+
+                // split the data set into ohlc and volume
+                var ohlc = [],
+                    volume = [],
+                    dataLength = data.length,
+                    i = 0;
+
+                for (i; i < dataLength; i += 1) {
+                    ohlc.push([
+                    data[i][0], // the date
+                    data[i][1], // open
+                    data[i][2], // high
+                    data[i][3], // low
+                    data[i][4] // close
+                    ]);
+
+                    volume.push([
+                    data[i][0], // the date
+                    data[i][5] // the volume
+                    ]);
+                }
+
+                Highcharts.stockChart('chartContainer', {
+                    yAxis: [{
+                    labels: {
+                        align: 'left'
+                    },
+                    height: '80%',
+                    resize: {
+                        enabled: true
+                    }
+                    }, {
+                    labels: {
+                        align: 'left'
+                    },
+                    top: '80%',
+                    height: '20%',
+                    offset: 0
+                    }],
+                    tooltip: {
+                    shape: 'square',
+                    headerShape: 'callout',
+                    borderWidth: 0,
+                    shadow: false,
+                    positioner: function(width, height, point) {
+                        var chart = this.chart,
+                        position;
+
+                        if (point.isHeader) {
+                        position = {
+                            x: Math.max(
+                            // Left side limit
+                            chart.plotLeft,
+                            Math.min(
+                                point.plotX + chart.plotLeft - width / 2,
+                                // Right side limit
+                                chart.chartWidth - width - chart.marginRight
+                            )
+                            ),
+                            y: point.plotY
+                        };
+                        } else {
+                        position = {
+                            x: point.series.chart.plotLeft,
+                            y: point.series.yAxis.top - chart.plotTop
+                        };
+                        }
+
+                        return position;
+                    }
+                    },
+                    series: [{
+                    type: 'ohlc',
+                    id: 'aapl-ohlc',
+                    name: 'AAPL Stock Price',
+                    data: ohlc
+                    }, {
+                    type: 'column',
+                    id: 'aapl-volume',
+                    name: 'AAPL Volume',
+                    data: volume,
+                    yAxis: 1
+                    }],
+                    responsive: {
+                    rules: [{
+                        condition: {
+                        maxWidth: 800
+                        },
+                        chartOptions: {
+                        rangeSelector: {
+                            inputEnabled: false
+                        }
+                        }
+                    }]
+                    }
+                });
+            }); 
+            */
+        // **************************************
+
+    },
+};
 </script>;
+<style scoped>
+    li {
+        cursor: pointer;
+    }
+    .callout {
+        border: 0.2rem solid gray;
+        position: relative;
+    }
+    .callout_close {
+                
+    }
+</style>
