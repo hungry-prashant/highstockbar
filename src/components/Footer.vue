@@ -30,5 +30,6 @@ footer {
   position: absolute;
   left: 50%;
   transform: translate(-50%);
+  padding: 2rem 1.5rem;
 }
 </style>
